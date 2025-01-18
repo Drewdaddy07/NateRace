@@ -32,12 +32,19 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void Run() {
+        //Add running forces
         Vector3 force = runningDirection * runSpeed;
 
         Vector3 strafeDirection = Vector3.Cross(runningDirection, Vector3.up).normalized;
 
-        force += strafeDirection * horizontalSpeed;
+        force += strafeDirection * horizontalSpeed * -inputVector.x;
 
-        rb.AddForce(force, ForceMode.Acceleration);
+        force = new Vector3(force.x, rb.velocity.y, force.z);
+
+        rb.velocity = force;
+
+        //Speed control
     }
+
+
 }
