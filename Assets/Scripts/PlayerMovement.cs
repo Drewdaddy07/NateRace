@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Rigidbody playerRB;
     [SerializeField] private CapsuleCollider playerCollider;
     [SerializeField] private PlayerInputManager inputManager;
+    [SerializeField] private Animator nateAnimator;
     private Rigidbody surfaceRB = null;
 
     [Header("Settings")]
@@ -58,6 +59,8 @@ public class PlayerMovement : MonoBehaviour
     private void Update() {
         inputVector.x = inputManager.GetInputActions().Movement.Horizontal.ReadValue<float>();
         inputVector.y = inputManager.GetInputActions().Movement.Vertical.ReadValue<float>();
+
+        UpdateAnimations();
     }
 
     private void FixedUpdate() {
@@ -69,12 +72,17 @@ public class PlayerMovement : MonoBehaviour
         wasGrounded = isGrounded;
     }
 
+    private void UpdateAnimations() {
+        nateAnimator.SetBool("IsGrounded", isGrounded);
+    }
+
     private void Jump() {
         Vector3 jumpForce = transform.up * jumpPower;
         Vector3 newVel = GetFlatVelWrld() + jumpForce;
         playerRB.velocity = newVel;
         jumpReady = false;
         Invoke("RefreshJump", jumpCooldown);
+        nateAnimator.SetTrigger("Jump");
     }
 
     public void RefreshJump() {
