@@ -10,7 +10,11 @@ public class InfiniteGenerator : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform player;
-    private List<GameObject> segmentPrefabs = new List<GameObject>();
+
+    [Header("Prefabs")]
+    [SerializeField] bool automaticPrefabs;
+    [SerializeField] List<GameObject> segmentPrefabs = new List<GameObject>();
+   
     
     private List<GameObject> activeSegments = new List<GameObject>();
 
@@ -21,10 +25,13 @@ public class InfiniteGenerator : MonoBehaviour
     private float generatedDistance = 0f;
     private Transform previousEndTransform;
 
-    private void Start() {
+    private void Start()
+    {
         previousEndTransform = transform;
-        
+
         // Find prefabs in the specified folder
+        if (automaticPrefabs || segmentPrefabs.Count == 0) {
+            segmentPrefabs.Clear();
         GameObject[] prefabs = AssetDatabase.FindAssets("t:Prefab", new string[] { "Assets/Prefabs/Segments" })
             .Select(p => AssetDatabase.GUIDToAssetPath(p))
             .Select(g => AssetDatabase.LoadAssetAtPath<GameObject>(g))
@@ -35,6 +42,7 @@ public class InfiniteGenerator : MonoBehaviour
         {
             segmentPrefabs.Add(prefabs[i]);
         }
+    }
 
 
     }
