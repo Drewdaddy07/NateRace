@@ -483,12 +483,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 614187850}
-  segmentPrefabs:
-  - {fileID: 1843522267638682234, guid: 2df3d79689561354baf049dd9cfbcc89, type: 3}
-  - {fileID: 2572367203940447935, guid: 42ecc9775a2626843b8f910b98cb7244, type: 3}
-  - {fileID: 1018176595881458782, guid: 9c4064830fad7174eb13d66e52288303, type: 3}
-  - {fileID: 1516922555651431496, guid: 56aa683cfd4613149a1f62b699bd3127, type: 3}
-  - {fileID: 4531152675996266208, guid: 06e5308be8b23ff439a8a39b89c2ae1d, type: 3}
   advanceDistance: 200
   removeDistance: 205
 --- !u!4 &183837911
@@ -597,7 +591,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1772371699}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 23.6, y: 0, z: 0}
 --- !u!114 &330585547
@@ -1080,7 +1075,6 @@ Transform:
   m_Children:
   - {fileID: 740165929}
   - {fileID: 8189705470516867073}
-  - {fileID: 1772371699}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &614187851
@@ -1099,6 +1093,8 @@ MonoBehaviour:
   playerCollider: {fileID: 740165930}
   inputManager: {fileID: 614187852}
   nateAnimator: {fileID: 8857592077279259326}
+  hitDebugPrefab: {fileID: 0}
+  debugMat: {fileID: 0}
   runningDirection: {x: 0, y: 0, z: 1}
   runSpeed: 5
   horizontalSpeed: 6
@@ -1118,6 +1114,7 @@ MonoBehaviour:
   slopeOffsetCoefficient: 0.8
   colliderHeight: 2
   colliderRadius: 0.2
+  turnSmoothing: 5
 --- !u!114 &614187852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2274,6 +2271,7 @@ GameObject:
   - component: {fileID: 1772371699}
   - component: {fileID: 1772371701}
   - component: {fileID: 1772371700}
+  - component: {fileID: 1772371702}
   m_Layer: 3
   m_Name: RunParticles
   m_TagString: Untagged
@@ -2289,12 +2287,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1772371698}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 9.67}
+  m_LocalRotation: {x: -0.2044961, y: -0, z: -0, w: 0.97886735}
+  m_LocalPosition: {x: 0, y: 5.7041016, z: 8.060529}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 614187850}
+  m_Father: {fileID: 330585546}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!199 &1772371700
 ParticleSystemRenderer:
@@ -7103,6 +7101,20 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &1772371702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772371698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e850fb6609c4bd41baac0db0681abaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 614187850}
+  rb: {fileID: 0}
 --- !u!1 &1864779671
 GameObject:
   m_ObjectHideFlags: 0
