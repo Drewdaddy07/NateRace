@@ -10,7 +10,6 @@ public class InfiniteGenerator : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform player;
-    //[SerializeField] private List<GameObject> segmentPrefabs = new List<GameObject>();
     private List<GameObject> segmentPrefabs = new List<GameObject>();
     
     private List<GameObject> activeSegments = new List<GameObject>();
@@ -36,6 +35,7 @@ public class InfiniteGenerator : MonoBehaviour
         {
             segmentPrefabs.Add(prefabs[i]);
         }
+
 
     }
 
