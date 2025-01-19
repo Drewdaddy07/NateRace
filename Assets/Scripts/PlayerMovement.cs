@@ -51,6 +51,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float colliderHeight = 2f;
     [SerializeField] private float colliderRadius = 0.2f;
 
+    [Header("Misc")]
+    [SerializeField] private float turnSmoothing = 5f;
+
     private Vector2 inputVector = Vector2.zero;
 
     private void Start() {
@@ -71,8 +74,16 @@ public class PlayerMovement : MonoBehaviour
         Run();
         Hover();
         CheckJump();
+        UpdateTurn();
 
         wasGrounded = isGrounded;
+    }
+
+    private void UpdateTurn() {
+        Vector3 direction = GetFlatVelWrld().normalized;
+        Quaternion targetRotation = Quaternion.LookRotation(direction, transform.up);
+        Quaternion smoothedRotation = Quaternion.Slerp(playerRB.rotation, targetRotation, Time.fixedDeltaTime * turnSmoothing);
+        playerRB.MoveRotation(smoothedRotation);
     }
 
     private void UpdateAnimations() {
