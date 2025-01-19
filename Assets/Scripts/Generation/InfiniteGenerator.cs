@@ -1,13 +1,18 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class InfiniteGenerator : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Transform player;
-    [SerializeField] private List<GameObject> segmentPrefabs = new List<GameObject>();
-
+    //[SerializeField] private List<GameObject> segmentPrefabs = new List<GameObject>();
+    private List<GameObject> segmentPrefabs = new List<GameObject>();
+    
     private List<GameObject> activeSegments = new List<GameObject>();
 
     [Header("Settings")]
@@ -19,6 +24,19 @@ public class InfiniteGenerator : MonoBehaviour
 
     private void Start() {
         previousEndTransform = transform;
+        
+        // Find prefabs in the specified folder
+        GameObject[] prefabs = AssetDatabase.FindAssets("t:Prefab", new string[] { "Assets/Prefabs/Segments" })
+            .Select(p => AssetDatabase.GUIDToAssetPath(p))
+            .Select(g => AssetDatabase.LoadAssetAtPath<GameObject>(g))
+            .ToArray();
+
+        // Iterate through the loaded prefabs
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            segmentPrefabs.Add(prefabs[i]);
+        }
+
     }
 
     private void FixedUpdate() {
