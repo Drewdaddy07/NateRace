@@ -20,12 +20,12 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void UpdateMoneyUI(int amount) {
-        moneyText.text = $"${amount}";
+    private void Start() {
+        MoneyManager.Instance.OnMoneyChanged += UpdateMoneyUI;
     }
 
-    private void OnEnable() {
-        MoneyManager.Instance.OnMoneyChanged += UpdateMoneyUI;
+    public void UpdateMoneyUI(int amount) {
+        moneyText.text = $"${amount}";
     }
 
     private void OnDisable() {
