@@ -12,6 +12,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Animator nateAnimator;
     private Rigidbody surfaceRB = null;
 
+    [SerializeField] private GameObject hitDebugPrefab;
+    [SerializeField] private Material debugMat;
+
     [Header("Settings")]
     [SerializeField] private Vector3 runningDirection = Vector3.forward;
 
@@ -132,13 +135,26 @@ public class PlayerMovement : MonoBehaviour
         Ray groundCheckRay = new Ray(transform.position, -transform.up);
         float checkDistance = (colliderHeight * 0.5f) - groundCheckRadius + groundCheckAdditional;
 
-        Physics.SphereCast(groundCheckRay, groundCheckRadius, out RaycastHit rayHit, checkDistance, walkable, QueryTriggerInteraction.Ignore);
-        if(rayHit.collider != null) {
-            groundCheckHit = rayHit;
-            isGrounded = true;
-        }
-        else {
-            isGrounded = false;
+        RaycastHit[] hits = Physics.SphereCastAll(groundCheckRay, groundCheckRadius, checkDistance, walkable, QueryTriggerInteraction.Ignore);
+
+        float highestDistance = float.MinValue;
+        isGrounded = false;
+
+        for (int i = 0; i < hits.Length; i++) {
+            RaycastHit hit = hits[i];
+
+            float angle = Vector3.Angle(hit.normal, transform.up);
+
+            if (angle <= maxSlopeAngle) {
+
+                float distance = transform.InverseTransformPoint(hit.point).y;
+
+                if (distance > highestDistance) {
+                    highestDistance = distance;
+                    groundCheckHit = hit;
+                    isGrounded = true;
+                }
+            }
         }
 
         if (!isGrounded) {
@@ -149,46 +165,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    #region Old broken spherecasting
-    /*
-        //A very very verbose way of finding the best ground hit
-        //neceessary for the hovering system to work with steep slopes
-        RaycastHit[] hits = Physics.SphereCastAll(groundCheckRay, groundCheckRadius, checkDistance, walkable, QueryTriggerInteraction.Ignore);
-        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
-        float highestDistance = float.MinValue;
-        isGrounded = false;
-        
-        for (int i = 0; i < hits.Length; i++) {
-            RaycastHit hit = hits[i];
-
-            float angle = Vector3.Angle(hit.normal, transform.up);
-
-            if (angle <= maxSlopeAngle) {
-
-                float distance = transform.InverseTransformPoint(hit.point).y;
-
-                Debug.Log($"Valid hit {i}  {distance}");
-
-                if (distance > highestDistance) {
-                    highestDistance = distance;
-                    groundCheckHit = hit;
-                    isGrounded = true;
-                }
-            }
-        }
-        */
-    #endregion
-    //Sphercastall gives different results than spherecast
-    //Spherecast: 1st hit is used always, smooth
-    //Spherecastall: higher hit is used, but is always the 2nd for some reason
-    //despite logically being hit 2nd, after already colliding with the first
-    //point, therefore being further away?
-
     //'floats' the player to avoid collision issues and better for slopes generally
     private void Hover() {
         if(isGrounded && jumpReady) {
-            Vector3 surfaceNormal = groundCheckHit.normal;
+            //need to get new normal bc spherecast gives silly results
+            Ray normalCheckRay = new Ray(groundCheckHit.point + transform.up * 0.04f, -transform.up);
+            Physics.Raycast(normalCheckRay, out RaycastHit hit, 0.1f, walkable, QueryTriggerInteraction.Ignore);
+
+            Vector3 surfaceNormal = hit.normal;
 
             Vector3 relativeNormal = transform.InverseTransformDirection(surfaceNormal);
             float dot = Vector3.Dot(GetFlatVelLocal(), relativeNormal);
@@ -202,7 +186,7 @@ public class PlayerMovement : MonoBehaviour
             float force = (distance * hoverDistanceMutliplier * hoverForce * verticalFactor) - (dot * slopeOffsetCoefficient);
             force = Mathf.Clamp(force, -maxHoverForce, maxHoverForce);
 
-            Vector3 newVelocity = GetFlatVelWrld() + GetSurfaceVel() + transform.up * force;
+            Vector3 newVelocity = new Vector3(playerRB.velocity.x, 0f, playerRB.velocity.z) + transform.up * force;
             playerRB.velocity = newVelocity;
         }
     }
