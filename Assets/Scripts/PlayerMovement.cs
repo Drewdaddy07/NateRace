@@ -30,6 +30,10 @@ public class PlayerMovement : MonoBehaviour
     private bool queuedJump = false;
     private bool jumpReady = true;
 
+    [Header("Sliding")]
+    private bool isSliding = false;
+    private bool pressingSlide = false;
+
     [Header("Grounding")]
     [SerializeField] private LayerMask walkable;
     [SerializeField] private float maxSlopeAngle = 55f;
@@ -46,10 +50,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float hoverDistanceMutliplier = 1.4f;
     [SerializeField] private float maxHoverForce = 3f;
     [SerializeField] private float slopeOffsetCoefficient = 0.8f;
+    [SerializeField] private float slidingHoverHeight = 0.3f;
 
     [Header("Collider")]
     [SerializeField] private float colliderHeight = 2f;
     [SerializeField] private float colliderRadius = 0.2f;
+    [SerializeField] private float colliderSlidingHeight = 0.5f;
 
     [Header("Misc")]
     [SerializeField] private float turnSmoothing = 5f;
@@ -65,6 +71,8 @@ public class PlayerMovement : MonoBehaviour
     private void Update() {
         inputVector.x = inputManager.GetInputActions().Movement.Horizontal.ReadValue<float>();
         inputVector.y = inputManager.GetInputActions().Movement.Vertical.ReadValue<float>();
+        pressingSlide = (inputManager.GetInputActions().Movement.Slide.ReadValue<float>() == 1f);
+        Debug.Log(pressingSlide);
 
         UpdateAnimations();
     }
@@ -72,11 +80,29 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate() {
         GroundCheck();
         Run();
+        Slide();
         Hover();
         CheckJump();
         UpdateTurn();
 
         wasGrounded = isGrounded;
+    }
+
+    private void Slide() {
+        //start slide
+        if(!isSliding && isGrounded && pressingSlide) {
+            isSliding = true;
+        }
+
+        //end slide
+        if (isSliding) {
+            Ray upCheckRay = new Ray(transform.position, transform.up);
+            Physics.SphereCast(upCheckRay, colliderRadius, out RaycastHit hit, colliderHeight - slidingHoverHeight, walkable, QueryTriggerInteraction.Ignore);
+
+            if(!isGrounded || (hit.collider == null && !pressingSlide)){
+                isSliding = false;
+            }
+        }
     }
 
     private void UpdateTurn() {
@@ -88,6 +114,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdateAnimations() {
         nateAnimator.SetBool("IsGrounded", isGrounded);
+        nateAnimator.SetBool("IsSliding", isSliding);
     }
 
     private void Jump() {
@@ -189,7 +216,10 @@ public class PlayerMovement : MonoBehaviour
             float dot = Vector3.Dot(GetFlatVelLocal(), relativeNormal);
 
             Vector3 relativePoint = transform.InverseTransformPoint(groundCheckHit.point);
-            float distance = relativePoint.y + colliderHeight * 0.5f;
+
+            float targetHeight = colliderHeight * 0.5f;
+
+            float distance = relativePoint.y + targetHeight;
 
             float verticalVelocity = GetSelfVel().y;
             float verticalFactor = Mathf.Abs(Mathf.Clamp(verticalVelocity, 1f, 10f));
@@ -237,7 +267,7 @@ public class PlayerMovement : MonoBehaviour
             playerCollider.radius = colliderRadius;
             float height = colliderHeight - stepHeight;
             playerCollider.height = height;
-            playerCollider.center = new Vector3(0f, 0f, stepHeight / 2f);
+            playerCollider.center = new Vector3(0f, 0f, (-1f + colliderHeight / 2f) + stepHeight / 2f);
         }
     }
 
