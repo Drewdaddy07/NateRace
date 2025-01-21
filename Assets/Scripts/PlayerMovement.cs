@@ -218,6 +218,9 @@ public class PlayerMovement : MonoBehaviour
             Vector3 relativePoint = transform.InverseTransformPoint(groundCheckHit.point);
 
             float targetHeight = colliderHeight * 0.5f;
+            if (isSliding) {
+                colliderHeight = slidingHoverHeight;
+            }
 
             float distance = relativePoint.y + targetHeight;
 
