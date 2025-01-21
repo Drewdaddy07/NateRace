@@ -73,7 +73,6 @@ public class PlayerMovement : MonoBehaviour
         inputVector.x = inputManager.GetInputActions().Movement.Horizontal.ReadValue<float>();
         inputVector.y = inputManager.GetInputActions().Movement.Vertical.ReadValue<float>();
         pressingSlide = (inputManager.GetInputActions().Movement.Slide.ReadValue<float>() == 1f);
-        Debug.Log(pressingSlide);
 
         UpdateAnimations();
     }
@@ -93,17 +92,20 @@ public class PlayerMovement : MonoBehaviour
         //start slide
         if(!isSliding && isGrounded && pressingSlide) {
             isSliding = true;
+            CalculateCollider(colliderRadius, colliderSlidingHeight, stepHeight);
         }
 
         //end slide
         if (isSliding) {
-            Ray upCheckRay = new Ray(transform.position, transform.up);
-            Physics.SphereCast(upCheckRay, colliderRadius, out RaycastHit hit, colliderHeight - slidingHoverHeight, walkable, QueryTriggerInteraction.Ignore);
+            Ray upCheckRay = new Ray(transform.position + -transform.up * 0.5f, transform.up);
+            Physics.SphereCast(upCheckRay, colliderRadius, out RaycastHit hit, 1.5f - colliderRadius, walkable, QueryTriggerInteraction.Ignore);
 
             if(!isGrounded || (hit.collider == null && !pressingSlide)){
                 isSliding = false;
+                CalculateCollider(colliderRadius, colliderHeight, stepHeight);
             }
         }
+
     }
 
     private void UpdateTurn() {
@@ -171,8 +173,9 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void GroundCheck() {
-        Ray groundCheckRay = new Ray(transform.position, -transform.up);
-        float checkDistance = (colliderHeight * 0.5f) - groundCheckRadius + groundCheckAdditional;
+        Vector3 position = transform.position + transform.up * playerCollider.center.z;
+        Ray groundCheckRay = new Ray(position, -transform.up);
+        float checkDistance = 1f - groundCheckRadius + groundCheckAdditional + playerCollider.center.z;
 
         RaycastHit[] hits = Physics.SphereCastAll(groundCheckRay, groundCheckRadius, checkDistance, walkable, QueryTriggerInteraction.Ignore);
 
@@ -223,10 +226,7 @@ public class PlayerMovement : MonoBehaviour
 
             Vector3 relativePoint = transform.InverseTransformPoint(groundCheckHit.point);
 
-            float targetHeight = colliderHeight * 0.5f;
-            if (isSliding) {
-                colliderHeight = slidingHoverHeight;
-            }
+            float targetHeight = 1f;
 
             float distance = relativePoint.y + targetHeight;
 
@@ -272,12 +272,16 @@ public class PlayerMovement : MonoBehaviour
     #endregion
 
     private void OnValidate() {
-        if(playerCollider != null) {
-            playerCollider.radius = colliderRadius;
-            float height = colliderHeight - stepHeight;
-            playerCollider.height = height;
-            playerCollider.center = new Vector3(0f, 0f, (-1f + colliderHeight / 2f) + stepHeight / 2f);
+        if(playerCollider != null && !Application.isPlaying) {
+            CalculateCollider(colliderRadius, colliderHeight, stepHeight);
         }
+    }
+
+    private void CalculateCollider(float radius, float height, float stepSpace) {
+        playerCollider.radius = radius;
+        float realHeight = height - stepSpace;
+        playerCollider.height = realHeight;
+        playerCollider.center = new Vector3(0f, 0f, (-1f + height / 2f) + stepSpace / 2f);
     }
 
     private void OnEnable() {
