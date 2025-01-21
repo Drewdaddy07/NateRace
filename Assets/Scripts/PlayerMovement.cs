@@ -26,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpPower = 5f;
     [SerializeField] private float coyoteTime = 0.15f;
     [SerializeField] private float jumpCooldown = 0.2f;
+    [SerializeField] private float WallCastOffset = -0.75f;
     private Coroutine queuedJumpCoroutine = null;
     private bool queuedJump = false;
     private bool jumpReady = true;
@@ -201,6 +202,11 @@ public class PlayerMovement : MonoBehaviour
         else {
             timeSinceLastGrounded = 0f;
         }
+
+        //if (!isGrounded)
+        //{
+        //    CheckForWalls();
+        //}
     }
 
     //'floats' the player to avoid collision issues and better for slopes generally
@@ -281,4 +287,30 @@ public class PlayerMovement : MonoBehaviour
     private void OnDisable() {
         inputManager.GetInputActions().Movement.Jump.performed -= TryJump;
     }
+
+    /*
+    private void CheckForWalls()
+    {
+        float wallCheckDistance = 0.5f; // Adjust as needed
+        Vector3 start = transform.position + Vector3.up * WallCastOffset; // Start slightly above the ground
+        Vector3 direction = transform.forward;
+
+        if (Physics.Raycast(start, direction, out RaycastHit hit, wallCheckDistance, walkable, QueryTriggerInteraction.Ignore))
+        {
+            // Prevent forward movement if a wall is detected
+            if (Vector3.Angle(hit.normal, Vector3.up) > maxSlopeAngle)
+            {
+                runningDirection = Vector3.zero; // Prevent forward movement
+            }
+        }
+        else
+        {
+            // Restore forward movement
+            runningDirection = Vector3.forward;
+        }
+
+        // Optional: Debug the wall check
+        Debug.DrawRay(start, direction * wallCheckDistance, Color.red);
+    }
+    */
 }
