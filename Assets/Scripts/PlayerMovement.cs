@@ -10,6 +10,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private CapsuleCollider playerCollider;
     [SerializeField] private PlayerInputManager inputManager;
     [SerializeField] private Animator nateAnimator;
+    [SerializeField] private Transform pivotTransform;
     private Rigidbody surfaceRB = null;
 
     [SerializeField] private GameObject hitDebugPrefab;
@@ -19,19 +20,25 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Vector3 runningDirection = Vector3.forward;
 
     [Header("Basic Stats")]
-    [SerializeField] private float runSpeed;
+    [SerializeField] private float acceleration = 5f;
     [SerializeField] private float horizontalSpeed = 2f;
+    [SerializeField] private float horizontalDecceleration = 0.6f;
+    [SerializeField] private Vector2 runSpeedMinMax = new Vector2(6f, 20f);
+    [SerializeField] private float passiveGroundedMomentumLoss = 2f;
+    private float currentRunSpeed = 6f;
 
     [Header("Jumping")]
     [SerializeField] private float jumpPower = 5f;
     [SerializeField] private float coyoteTime = 0.15f;
     [SerializeField] private float jumpCooldown = 0.2f;
-    [SerializeField] private float WallCastOffset = -0.75f;
+    [SerializeField] private float downwardJumpPower = 7f;
     private Coroutine queuedJumpCoroutine = null;
     private bool queuedJump = false;
     private bool jumpReady = true;
+    private bool downJumpReady = true;
 
     [Header("Sliding")]
+    [SerializeField] private float momentumGain = 0.4f;
     private bool isSliding = false;
     private bool pressingSlide = false;
 
@@ -44,6 +51,7 @@ public class PlayerMovement : MonoBehaviour
     private bool wasGrounded = false;
     private bool isGrounded = false;
     private float timeSinceLastGrounded = 0f;
+    private Vector3 realGroundNormal = Vector3.up;
 
     [Header("Hovering")]
     [SerializeField] private float stepHeight = 0.3f;
@@ -60,6 +68,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Misc")]
     [SerializeField] private float turnSmoothing = 5f;
+    [SerializeField] private float surfaceNormalSmoothing = 3f;
 
     private Vector2 inputVector = Vector2.zero;
 
@@ -82,10 +91,86 @@ public class PlayerMovement : MonoBehaviour
         Run();
         Slide();
         Hover();
+        Momentum();
         CheckJump();
         UpdateTurn();
 
         wasGrounded = isGrounded;
+    }
+
+    private void Run() {
+        //Add running forces
+        Vector3 force = runningDirection * acceleration;
+
+        playerRB.AddForce(force, ForceMode.VelocityChange);
+
+        float forwardSpeed = GetFlatVelWrld().z;
+        if (forwardSpeed > currentRunSpeed) {
+            float amountOver = forwardSpeed / currentRunSpeed;
+            amountOver = Mathf.Clamp(amountOver, 1f, 4f);
+
+            Vector3 dirToStop = -runningDirection.normalized;
+
+            Vector3 opposingForce = dirToStop * acceleration * amountOver;
+
+            playerRB.AddForce(opposingForce, ForceMode.VelocityChange);
+        }
+
+        //strafing forces
+        Vector3 strafeDirection = Vector3.Cross(runningDirection, Vector3.up).normalized;
+        Vector3 strafeForce = strafeDirection * horizontalSpeed * -inputVector.x;
+
+        if (isSliding) {
+            strafeForce = Vector3.zero;
+        }
+
+        Vector3 strafeVelocity = new Vector3(GetFlatVelWrld().x, 0f, 0f);
+
+        Debug.Log(strafeVelocity);
+
+        if (strafeForce.magnitude > 0.01f) {
+            playerRB.AddForce(strafeForce, ForceMode.VelocityChange);
+        }
+        else {
+            Vector3 slowdownForce = -strafeVelocity * horizontalDecceleration;
+            playerRB.AddForce(slowdownForce, ForceMode.Acceleration);
+        }
+        
+        if (strafeVelocity.magnitude > horizontalSpeed) {
+
+            Vector3 excessVelocity = strafeVelocity.normalized * (strafeVelocity.magnitude - horizontalSpeed);
+
+            playerRB.AddForce(-excessVelocity, ForceMode.VelocityChange);
+        }
+    }
+
+
+    private void Momentum() {
+        //Add momentum for sliding
+        if(isGrounded) {
+
+            if (isSliding) {
+                float angle = Vector3.Angle(transform.forward, realGroundNormal) - 90f;
+                currentRunSpeed -= (angle * momentumGain) * Time.fixedDeltaTime;
+            }
+            else {
+                currentRunSpeed -= passiveGroundedMomentumLoss * Time.fixedDeltaTime;
+            }
+        }
+
+        currentRunSpeed = Mathf.Clamp(currentRunSpeed, runSpeedMinMax.x, runSpeedMinMax.y);
+    }
+
+    private void TryDownwardJump(InputAction.CallbackContext context) {
+        if (!isGrounded && downJumpReady) {
+            DownJump();
+        }
+    }
+
+    private void DownJump() {
+        downJumpReady = false;
+        Vector3 newVel = GetFlatVelWrld() + -transform.up * downwardJumpPower;
+        playerRB.velocity = newVel;
     }
 
     private void Slide() {
@@ -118,6 +203,15 @@ public class PlayerMovement : MonoBehaviour
     private void UpdateAnimations() {
         nateAnimator.SetBool("IsGrounded", isGrounded);
         nateAnimator.SetBool("IsSliding", isSliding);
+
+        Vector3 upDir = Vector3.up;
+        if (isGrounded) {
+            upDir = realGroundNormal;
+        }
+        Vector3 projectedForward = Vector3.ProjectOnPlane(transform.forward, upDir).normalized;
+        Quaternion targetPivot = Quaternion.LookRotation(projectedForward, upDir);
+        Quaternion smoothedPivot = Quaternion.Slerp(pivotTransform.rotation, targetPivot, Time.deltaTime * surfaceNormalSmoothing);
+        pivotTransform.rotation = smoothedPivot;
     }
 
     private void Jump() {
@@ -158,20 +252,7 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(coyoteTime);
         queuedJump = false;
     }
-
-    private void Run() {
-        //Add running forces
-        Vector3 force = runningDirection * runSpeed;
-
-        Vector3 strafeDirection = Vector3.Cross(runningDirection, Vector3.up).normalized;
-
-        force += strafeDirection * horizontalSpeed * -inputVector.x;
-
-        force = new Vector3(force.x, playerRB.velocity.y, force.z);
-
-        playerRB.velocity = force;
-    }
-
+    
     private void GroundCheck() {
         Vector3 position = transform.position + transform.up * playerCollider.center.z;
         Ray groundCheckRay = new Ray(position, -transform.up);
@@ -199,6 +280,17 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
+        if (isGrounded) {
+            downJumpReady = true;
+
+            Ray normalCheckRay = new Ray(groundCheckHit.point + transform.up * 0.04f, -transform.up);
+            Physics.Raycast(normalCheckRay, out RaycastHit hit, 0.1f, walkable, QueryTriggerInteraction.Ignore);
+            realGroundNormal = hit.normal;
+        }
+        else {
+            realGroundNormal = Vector3.up;
+        }
+
         if (!isGrounded) {
             timeSinceLastGrounded += Time.fixedDeltaTime;
         }
@@ -215,11 +307,7 @@ public class PlayerMovement : MonoBehaviour
     //'floats' the player to avoid collision issues and better for slopes generally
     private void Hover() {
         if(isGrounded && jumpReady) {
-            //need to get new normal bc spherecast gives silly results
-            Ray normalCheckRay = new Ray(groundCheckHit.point + transform.up * 0.04f, -transform.up);
-            Physics.Raycast(normalCheckRay, out RaycastHit hit, 0.1f, walkable, QueryTriggerInteraction.Ignore);
-
-            Vector3 surfaceNormal = hit.normal;
+            Vector3 surfaceNormal = realGroundNormal;
 
             Vector3 relativeNormal = transform.InverseTransformDirection(surfaceNormal);
             float dot = Vector3.Dot(GetFlatVelLocal(), relativeNormal);
@@ -286,10 +374,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnEnable() {
         inputManager.GetInputActions().Movement.Jump.performed += TryJump;
+        inputManager.GetInputActions().Movement.Slide.performed += TryDownwardJump;
     }
 
     private void OnDisable() {
         inputManager.GetInputActions().Movement.Jump.performed -= TryJump;
+        inputManager.GetInputActions().Movement.Slide.performed -= TryDownwardJump;
     }
 
     /*
