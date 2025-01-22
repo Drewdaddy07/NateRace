@@ -12206,10 +12206,10 @@ MonoBehaviour:
   groundCheckAdditional: 0.1
   groundCheckRadius: 0.2
   stepHeight: 0.15
-  hoverForce: 12
-  hoverDistanceMutliplier: 3
+  hoverForce: 17
+  hoverDistanceMutliplier: 1.6
   maxHoverForce: 4
-  slopeOffsetCoefficient: 0.8
+  slopeOffsetCoefficient: 1
   slidingHoverHeight: 0.3
   colliderHeight: 1.8
   colliderRadius: 0.2

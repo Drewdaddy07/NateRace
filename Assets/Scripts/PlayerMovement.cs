@@ -126,8 +126,6 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 strafeVelocity = new Vector3(GetFlatVelWrld().x, 0f, 0f);
 
-        Debug.Log(strafeVelocity);
-
         if (strafeForce.magnitude > 0.01f) {
             playerRB.AddForce(strafeForce, ForceMode.VelocityChange);
         }
@@ -311,6 +309,8 @@ public class PlayerMovement : MonoBehaviour
 
             Vector3 relativeNormal = transform.InverseTransformDirection(surfaceNormal);
             float dot = Vector3.Dot(GetFlatVelLocal(), relativeNormal);
+
+            Debug.Log(dot * slopeOffsetCoefficient);
 
             Vector3 relativePoint = transform.InverseTransformPoint(groundCheckHit.point);
 
