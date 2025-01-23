@@ -1096,14 +1096,20 @@ MonoBehaviour:
   playerCollider: {fileID: 740165930}
   inputManager: {fileID: 614187852}
   nateAnimator: {fileID: 8857592077279259326}
+  pivotTransform: {fileID: 0}
   hitDebugPrefab: {fileID: 0}
   debugMat: {fileID: 0}
   runningDirection: {x: 0, y: 0, z: 1}
-  runSpeed: 5
+  acceleration: 5
   horizontalSpeed: 6
+  horizontalDecceleration: 0.6
+  runSpeedMinMax: {x: 6, y: 20}
+  passiveGroundedMomentumLoss: 2
   jumpPower: 5
   coyoteTime: 0.15
   jumpCooldown: 0.2
+  downwardJumpPower: 7
+  momentumGain: 0.4
   walkable:
     serializedVersion: 2
     m_Bits: 1
@@ -1120,6 +1126,7 @@ MonoBehaviour:
   colliderRadius: 0.2
   colliderSlidingHeight: 0.5
   turnSmoothing: 5
+  surfaceNormalSmoothing: 3
 --- !u!114 &614187852
 MonoBehaviour:
   m_ObjectHideFlags: 0
