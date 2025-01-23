@@ -60,6 +60,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float maxHoverForce = 3f;
     [SerializeField] private float slopeOffsetCoefficient = 0.8f;
     [SerializeField] private float slidingHoverHeight = 0.3f;
+    [SerializeField] private float hoverDamping = 15f;
 
     [Header("Collider")]
     [SerializeField] private float colliderHeight = 2f;
@@ -100,7 +101,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void Run() {
         //Add running forces
-        Vector3 force = runningDirection * acceleration;
+        Vector3 dir = Vector3.ProjectOnPlane(runningDirection, realGroundNormal);
+        Vector3 force = dir * acceleration;
 
         playerRB.AddForce(force, ForceMode.VelocityChange);
 
@@ -167,7 +169,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void DownJump() {
         downJumpReady = false;
-        Vector3 newVel = GetFlatVelWrld() + -transform.up * downwardJumpPower;
+        float verticalVel = GetSelfVel().y;
+        verticalVel = Mathf.Clamp(verticalVel, float.MinValue, 0f);
+        Vector3 newVel = GetFlatVelWrld() + -transform.up * (downwardJumpPower + Mathf.Abs(verticalVel));
         playerRB.velocity = newVel;
     }
 
@@ -309,22 +313,22 @@ public class PlayerMovement : MonoBehaviour
 
             Vector3 relativeNormal = transform.InverseTransformDirection(surfaceNormal);
             float dot = Vector3.Dot(GetFlatVelLocal(), relativeNormal);
-
-            Debug.Log(dot * slopeOffsetCoefficient);
-
             Vector3 relativePoint = transform.InverseTransformPoint(groundCheckHit.point);
 
             float targetHeight = 1f;
+            float currentHeight = relativePoint.y;
+            float distance = currentHeight + targetHeight;
+            Debug.Log(distance);
 
-            float distance = relativePoint.y + targetHeight;
+            float springForce = distance * hoverDistanceMutliplier * hoverForce;
 
             float verticalVelocity = GetSelfVel().y;
-            float verticalFactor = Mathf.Abs(Mathf.Clamp(verticalVelocity, 1f, 10f));
+            float damperForce = -verticalVelocity * hoverDamping;
 
-            float force = (distance * hoverDistanceMutliplier * hoverForce * verticalFactor) - (dot * slopeOffsetCoefficient);
-            force = Mathf.Clamp(force, -maxHoverForce, maxHoverForce);
+            float totalForce = springForce + damperForce - (dot * slopeOffsetCoefficient);
+            totalForce = Mathf.Clamp(totalForce, -maxHoverForce, maxHoverForce);
 
-            Vector3 newVelocity = new Vector3(playerRB.velocity.x, 0f, playerRB.velocity.z) + transform.up * force;
+            Vector3 newVelocity = new Vector3(playerRB.velocity.x, 0f, playerRB.velocity.z) + transform.up * totalForce;
             playerRB.velocity = newVelocity;
         }
     }
