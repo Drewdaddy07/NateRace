@@ -2135,12 +2135,13 @@ MonoBehaviour:
   maxSlopeAngle: 60
   groundCheckAdditional: 0.1
   groundCheckRadius: 0.2
-  stepHeight: 0.15
-  hoverForce: 17
-  hoverDistanceMutliplier: 1.6
-  maxHoverForce: 4
+  stepHeight: 0.52
+  hoverForce: 15
+  hoverDistanceMutliplier: 1.5
+  maxHoverForce: 15
   slopeOffsetCoefficient: 1
   slidingHoverHeight: 0.3
+  hoverDamping: 0
   colliderHeight: 1.8
   colliderRadius: 0.2
   colliderSlidingHeight: 0.7
@@ -2322,9 +2323,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.2
-  m_Height: 1.65
+  m_Height: 1.28
   m_Direction: 2
-  m_Center: {x: 0, y: 0, z: -0.02500002}
+  m_Center: {x: 0, y: 0, z: 0.15999997}
 --- !u!1 &9154523481098541284
 GameObject:
   m_ObjectHideFlags: 0
