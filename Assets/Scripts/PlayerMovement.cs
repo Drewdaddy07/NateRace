@@ -23,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float acceleration = 5f;
     [SerializeField] private float horizontalSpeed = 2f;
     [SerializeField] private float horizontalDecceleration = 0.6f;
-    [SerializeField] private Vector2 runSpeedMinMax = new Vector2(6f, 20f);
+    [SerializeField] public Vector2 runSpeedMinMax = new Vector2(6f, 20f);
     [SerializeField] private float passiveGroundedMomentumLoss = 2f;
     private float currentRunSpeed = 6f;
 
@@ -214,6 +214,10 @@ public class PlayerMovement : MonoBehaviour
         Quaternion targetPivot = Quaternion.LookRotation(projectedForward, upDir);
         Quaternion smoothedPivot = Quaternion.Slerp(pivotTransform.rotation, targetPivot, Time.deltaTime * surfaceNormalSmoothing);
         pivotTransform.rotation = smoothedPivot;
+
+        float speed = GetFlatVelWrld().magnitude;
+        speed /= runSpeedMinMax.x;
+        nateAnimator.SetFloat("RunSpeedMultiplier", speed);
     }
 
     private void Jump() {
@@ -318,7 +322,6 @@ public class PlayerMovement : MonoBehaviour
             float targetHeight = 1f;
             float currentHeight = relativePoint.y;
             float distance = currentHeight + targetHeight;
-            Debug.Log(distance);
 
             float springForce = distance * hoverDistanceMutliplier * hoverForce;
 
