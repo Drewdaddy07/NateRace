@@ -70,6 +70,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("Misc")]
     [SerializeField] private float turnSmoothing = 5f;
     [SerializeField] private float surfaceNormalSmoothing = 3f;
+    [SerializeField] private float snapDownDistance = 2.4f;
+    [SerializeField] private float snapDownAdditionalForce = 1f;
 
     private Vector2 inputVector = Vector2.zero;
 
@@ -95,8 +97,25 @@ public class PlayerMovement : MonoBehaviour
         Momentum();
         CheckJump();
         UpdateTurn();
+        SnapDown();
 
         wasGrounded = isGrounded;
+    }
+
+    private void SnapDown() {
+        if(!isGrounded && wasGrounded && jumpReady) {
+            RaycastHit hit = GroundRay(snapDownDistance);
+
+            if(hit.collider != null) {
+                float speed = playerRB.velocity.magnitude;
+                float dot = Vector3.Dot(playerRB.velocity, hit.normal);
+                if(dot > 0f) {
+                    Vector3 newVelocity = (playerRB.velocity - hit.normal * dot).normalized * speed;
+                    playerRB.velocity = newVelocity + -transform.up * snapDownAdditionalForce;
+                    GroundCheck();
+                }
+            }
+        }
     }
 
     private void Run() {
@@ -225,12 +244,15 @@ public class PlayerMovement : MonoBehaviour
         Vector3 newVel = GetFlatVelWrld() + jumpForce;
         playerRB.velocity = newVel;
         jumpReady = false;
+        isGrounded = false;
         Invoke("RefreshJump", jumpCooldown);
         nateAnimator.SetTrigger("Jump");
+        nateAnimator.SetBool("IsJumping", true);
     }
 
     public void RefreshJump() {
         jumpReady = true;
+        nateAnimator.SetBool("IsJumping", false);
     }
 
     private void CheckJump() {
@@ -259,15 +281,15 @@ public class PlayerMovement : MonoBehaviour
         queuedJump = false;
     }
     
-    private void GroundCheck() {
+    private RaycastHit GroundRay(float additional) {
         Vector3 position = transform.position + transform.up * playerCollider.center.z;
         Ray groundCheckRay = new Ray(position, -transform.up);
-        float checkDistance = 1f - groundCheckRadius + groundCheckAdditional + playerCollider.center.z;
+        float checkDistance = 1f - groundCheckRadius + additional + playerCollider.center.z;
 
         RaycastHit[] hits = Physics.SphereCastAll(groundCheckRay, groundCheckRadius, checkDistance, walkable, QueryTriggerInteraction.Ignore);
 
         float highestDistance = float.MinValue;
-        isGrounded = false;
+        RaycastHit rayHit = default;
 
         for (int i = 0; i < hits.Length; i++) {
             RaycastHit hit = hits[i];
@@ -280,11 +302,18 @@ public class PlayerMovement : MonoBehaviour
 
                 if (distance > highestDistance) {
                     highestDistance = distance;
-                    groundCheckHit = hit;
-                    isGrounded = true;
+                    rayHit = hit;
                 }
             }
         }
+
+        return rayHit;
+    }
+
+    private void GroundCheck() {
+        groundCheckHit = GroundRay(groundCheckAdditional);
+        bool foundHit = groundCheckHit.collider != null;
+        isGrounded = foundHit;
 
         if (isGrounded) {
             downJumpReady = true;

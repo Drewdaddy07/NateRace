@@ -5640,6 +5640,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 8516667849769647458, guid: 3896595a312ec0945ac88c4fb001df9e,
+        type: 3}
+      propertyPath: snapDownAdditionalForce
+      value: 0.91
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
