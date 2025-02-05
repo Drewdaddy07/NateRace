@@ -14,8 +14,12 @@ public class InfiniteGenerator : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] bool automaticPrefabs;
     [SerializeField] List<GameObject> segmentPrefabs = new List<GameObject>();
-   
-    
+
+    [Header("Region Settings")]
+    [SerializeField] private float regionLength = 1000f;
+    [SerializeField] private GameObject regionEndPrefab;
+    [SerializeField] private int coinCount = 350;
+
     private List<GameObject> activeSegments = new List<GameObject>();
 
     [Header("Settings")]
@@ -32,17 +36,17 @@ public class InfiniteGenerator : MonoBehaviour
         // Find prefabs in the specified folder
         if (automaticPrefabs || segmentPrefabs.Count == 0) {
             segmentPrefabs.Clear();
-        GameObject[] prefabs = AssetDatabase.FindAssets("t:Prefab", new string[] { "Assets/Prefabs/Segments" })
+            GameObject[] prefabs = AssetDatabase.FindAssets("t:Prefab", new string[] { "Assets/Prefabs/Segments" })
             .Select(p => AssetDatabase.GUIDToAssetPath(p))
             .Select(g => AssetDatabase.LoadAssetAtPath<GameObject>(g))
             .ToArray();
 
-        // Iterate through the loaded prefabs
-        for (int i = 0; i < prefabs.Length; i++)
-        {
-            segmentPrefabs.Add(prefabs[i]);
+            // Iterate through the loaded prefabs
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                segmentPrefabs.Add(prefabs[i]);
+            }
         }
-    }
 
 
     }
@@ -84,5 +88,8 @@ public class InfiniteGenerator : MonoBehaviour
         activeSegments.Add(segmentObject);
 
         previousEndTransform = segment.endTransform;
+
+        //generate collectables
+        float distanceThroughRegion = regionLength - generatedDistance;
     }
 }

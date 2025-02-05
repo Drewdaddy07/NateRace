@@ -10,6 +10,7 @@ public abstract class Collectable : MonoBehaviour
 
     private void OnTriggerEnter(Collider other) {
         if(other.gameObject.layer == 3) {
+            CollectionManager.Instance?.OnCollected(this);
             Collect();
         }
     }
